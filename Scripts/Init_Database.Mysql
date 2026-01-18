@@ -1,0 +1,26 @@
+/*
+=============================================================
+Create Database
+=============================================================
+Script Purpose:
+    This script creates new databases named "DataWarehouse_Bronze","DataWarehouse_Silver""DataWarehouse_Gold after checking if they already exists. 
+    If the database exists, it is dropped and recreated. 
+	  MySQL doesn’t support nested schemas, so I implement the Bronze–Silver–Gold architecture using separate databases. 
+    Each database acts as a schema, and transformations move data layer by layer.”
+*/
+
+
+
+
+-- If Database already Exists
+Drop DATABASE DataWarehouse_Bronze If exists;
+Drop DATABASE DataWarehouse_Silver If exists;
+Drop DATABASE DataWarehouse_Gold If exists;
+
+
+-- Create DataBase "DataWarehouse_Bronze","DataWarehouse_Silver", "DataWarehouse_Gold"
+
+CREATE DATABASE DataWarehouse_Bronze;
+CREATE DATABASE DataWarehouse_Silver;
+CREATE DATABASE DataWarehouse_Gold;
+
