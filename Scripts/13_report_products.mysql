@@ -1,0 +1,100 @@
+/*
+===============================================================================
+Product Report
+===============================================================================
+Purpose:
+    - This report consolidates key product metrics and behaviors.
+
+Highlights:
+    1. Gathers essential fields such as product name, category, subcategory, and cost.
+    2. Segments products by revenue to identify High-Performers, Mid-Range, or Low-Performers.
+    3. Aggregates product-level metrics:
+       - total orders
+       - total sales
+       - total quantity sold
+       - total customers (unique)
+       - lifespan (in months)
+    4. Calculates valuable KPIs:
+       - recency (months since last sale)
+       - average order revenue (AOR)
+       - average monthly revenue
+===============================================================================
+*/
+CREATE VIEW DataWarehouseAnalytics.report_products AS
+WITH base_query AS(
+SELECT 
+	s.order_number,
+	s.order_date,
+	s.sales_amount,
+	s.customer_key,
+	s.quantity,
+	p.product_key,
+	p.product_name,
+	p.category,
+	p.subcategory,
+	p.cost
+FROM fact_sales as s
+LEFT JOIN dim_products as p
+ON s.product_key = p.product_key
+WHERE order_date IS NOT NULL
+)
+
+/* ===============================================================================
+Product Aggregation: product level matrics
+===============================================================================*/
+
+
+, product_aggregation AS(
+SELECT 
+	product_key,
+	product_name,
+	category,
+	subcategory,
+	cost,
+	TIMESTAMPDIFF(MONTH,MIN(order_date),MAX(order_date)) as life_span,
+    MAX(order_date) as last_sale_date,
+	COUNT(DISTINCT order_number) as total_orders,
+	SUM(sales_amount) as total_sales,
+	SUM(quantity) as total_quantity,
+	COUNT(DISTINCT customer_key) as total_customer
+FROM base_query
+GROUP BY 
+	product_key,
+	product_name,
+	category,
+	subcategory,
+	cost)
+    
+/* ===============================================================================
+Final query: Combines all product results into one output
+===============================================================================*/    
+
+SELECT
+product_key,
+product_name,
+category,
+subcategory,
+cost,
+last_sale_date,
+TIMESTAMPDIFF(MONTH, last_sale_date,NOW()) as recency_in_months,
+CASE 
+   WHEN total_sales > 50000 THEN 'High Performance'
+   WHEN total_sales >= 10000 THEN 'Mid Range'
+   ELSE 'Low Performance'
+END as product_segment,
+life_span,
+total_orders,
+total_sales,
+total_quantity,
+total_customer,
+-- Average order revenue(AOR)
+CASE 
+    WHEN total_orders = 0 THEN 0
+    ELSE total_sales/total_orders
+END as avg_revenue_order,
+-- Average monthly revenue
+CASE
+   WHEN life_span = 0 THEN 0
+   ELSE ROUND(total_sales/life_span)
+END as avg_monthly_revenue
+FROM product_aggregation;
