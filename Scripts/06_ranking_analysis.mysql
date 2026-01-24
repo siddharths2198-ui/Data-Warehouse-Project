@@ -1,0 +1,79 @@
+/*
+===============================================================================
+Ranking Analysis
+===============================================================================
+Purpose:
+    - To rank items (e.g., products, customers) based on performance or other metrics.
+    - To identify top performers or laggards.
+
+MYSQL Functions Used:
+    - Window Ranking Functions: RANK()
+    - Clauses: GROUP BY, ORDER BY,LIMIT
+===============================================================================
+*/
+
+-- Which 5 products Generate Highest Revenue?
+-- Simple Ranking
+
+SELECT 
+ dp.product_name,
+ SUM(fs.sales_amount) as total_revenue
+FROM fact_sales as fs
+LEFT JOIN dim_products as dp
+on fs.product_key = dp.product_key 
+GROUP BY dp.product_name
+ORDER BY total_revenue DESC LIMIT 5;
+
+-- Complex but Flexibly Ranking Using Window Functions
+
+SELECT *
+FROM (
+    SELECT
+        p.product_name,
+        SUM(f.sales_amount) AS total_revenue,
+        RANK() OVER (ORDER BY SUM(f.sales_amount) DESC) AS rank_products
+    FROM fact_sales f
+    LEFT JOIN dim_products p
+        ON p.product_key = f.product_key
+    GROUP BY p.product_name
+) AS ranked_products
+WHERE rank_products <= 5;
+
+
+
+-- What are the 5 worst performing products in terms of sales?
+
+SELECT 
+ dp.product_name,
+ SUM(fs.sales_amount) as total_revenue
+FROM fact_sales as fs
+LEFT JOIN dim_products as dp
+on fs.product_key = dp.product_key 
+GROUP BY dp.product_name
+ORDER BY total_revenue LIMIT 5;
+
+-- Find the top 10 Customers with Highest Revenue
+
+SELECT 
+ dc.customer_key,
+ dc.first_name,
+ dc.last_name,
+ SUM(fs.sales_amount) as total_revenue
+FROM fact_sales as fs
+LEFT JOIN dim_customers as dc
+ON fs.customer_key = dc.customer_key
+GROUP BY dc.customer_key,dc.first_name, dc.last_name
+ORDER BY total_revenue DESC LIMIT 10;
+
+-- Find 3 Customers with Fewest order placed
+
+SELECT 
+ dc.customer_key,
+ dc.first_name,
+ dc.last_name,
+ count(DISTINCT fs.order_number) as total_order
+FROM fact_sales as fs
+LEFT JOIN dim_customers as dc
+ON fs.customer_key = dc.customer_key
+GROUP BY dc.customer_key,dc.first_name, dc.last_name
+ORDER BY total_order LIMIT 3;
