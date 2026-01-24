@@ -3,24 +3,105 @@
 Create Database
 =============================================================
 Script Purpose:
-    This script creates new databases named "DataWarehouse_Bronze","DataWarehouse_Silver""DataWarehouse_Gold after checking if they already exists. 
-    If the database exists, it is dropped and recreated. 
-	  MySQL doesn’t support nested schemas, so I implement the Bronze–Silver–Gold architecture using separate databases. 
-    Each database acts as a schema, and transformations move data layer by layer.”
+    This script creates a new database named 'DataWarehouseAnalytics' after checking if it already exists. 
+    If the database exists, it is dropped and recreated.
+	
+WARNING:
+    Running this script will drop the entire 'DataWarehouseAnalytics' database if it exists. 
+    All data in the database will be permanently deleted. Proceed with caution 
+    and ensure you have proper backups before running this script.
 */
 
 
 
+-- Drop and recreate the 'DataWarehouseAnalytics' database
 
--- If Database already Exists
-Drop DATABASE DataWarehouse_Bronze If exists;
-Drop DATABASE DataWarehouse_Silver If exists;
-Drop DATABASE DataWarehouse_Gold If exists;
+DROP DATABASE if exists DataWarehouseAnalytics;
+
+CREATE DATABASE DataWarehouseAnalytics;
 
 
--- Create DataBase "DataWarehouse_Bronze","DataWarehouse_Silver", "DataWarehouse_Gold"
+USE DataWarehouseAnalytics;
 
-CREATE DATABASE DataWarehouse_Bronze;
-CREATE DATABASE DataWarehouse_Silver;
-CREATE DATABASE DataWarehouse_Gold;
 
+
+
+
+CREATE TABLE dim_customers(
+	customer_key int,
+	customer_id int,
+	customer_number varchar(50),
+	first_name varchar(50),
+	last_name varchar(50),
+	country varchar(50),
+	marital_status varchar(50),
+	gender varchar(50),
+	birthdate date,
+	create_date date
+);
+
+
+
+CREATE TABLE dim_products(
+	product_key int ,
+	product_id int ,
+	product_number varchar(50) ,
+	product_name varchar(50) ,
+	category_id varchar(50) ,
+	category varchar(50) ,
+	subcategory varchar(50) ,
+	maintenance varchar(50) ,
+	cost int,
+	product_line varchar(50),
+	start_date date 
+);
+
+
+CREATE TABLE fact_sales(
+	order_number varchar(50),
+	product_key int,
+	customer_key int,
+	order_date date,
+	shipping_date date,
+	due_date date,
+	sales_amount int,
+	quantity tinyint,
+	price int 
+);
+
+
+TRUNCATE TABLE dim_customers;
+
+
+LOAD DATA LOCAL INFILE
+'/Users/aditishah/Desktop/siddharth/sql-data-analytics-project/datasets/flat-files/dim_customers.csv'
+INTO TABLE dim_customers
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
+
+
+TRUNCATE TABLE dim_products;
+
+LOAD DATA LOCAL INFILE
+'/Users/aditishah/Desktop/siddharth/sql-data-analytics-project/datasets/flat-files/dim_products.csv'
+INTO TABLE dim_products
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
+
+
+TRUNCATE TABLE fact_sales;
+
+LOAD DATA LOCAL INFILE
+'/Users/aditishah/Desktop/siddharth/sql-data-analytics-project/datasets/flat-files/fact_sales.csv'
+INTO TABLE fact_sales
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
